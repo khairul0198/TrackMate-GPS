@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,16 +32,17 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient locationClient;
     private LocationCallback locationCallback;
 
-    private TextView status;
+    private TextView phoneStatus, bikeStatus;
     private TextView latitude, longitude;
     private TextView accuracy, speed, updated;
     private Button gpsButton;
 
     private boolean tracking = false;
 
-    private final int BG = Color.rgb(10, 18, 35);
+    private final int BG = Color.rgb(9, 16, 31);
     private final int CARD = Color.rgb(22, 34, 56);
     private final int BLUE = Color.rgb(38, 132, 255);
+    private final int GREEN = Color.rgb(38, 190, 125);
     private final int WHITE = Color.WHITE;
     private final int MUTED = Color.rgb(160, 177, 200);
 
@@ -57,10 +59,8 @@ public class MainActivity extends AppCompatActivity {
         gpsButton.setOnClickListener(v -> {
             if (tracking) {
                 stopGPS();
-            } else if (hasPermission()) {
-                startGPS();
             } else {
-                requestGPSPermission();
+                startGPS();
             }
         });
 
@@ -78,11 +78,13 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout main = new LinearLayout(this);
         main.setOrientation(LinearLayout.VERTICAL);
-        main.setPadding(dp(20), dp(24), dp(20), dp(28));
+        main.setPadding(dp(18), dp(24), dp(18), dp(28));
 
         scroll.addView(main);
 
-        main.addView(text("TRACKMATE GPS", 25, WHITE, true));
+        TextView title = text("TRACKMATE GPS", 25, WHITE, true);
+        main.addView(title);
+
         main.addView(text(
             "Your vehicle. Your control.",
             13, MUTED, false
@@ -93,21 +95,23 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout statusCard = card(main);
 
         statusCard.addView(text(
-            "DEVICE STATUS", 12, MUTED, true
+            "TRACKING STATUS", 12, MUTED, true
         ));
 
-        status = text(
-            "● Waiting for GPS...", 18, WHITE, true
+        phoneStatus = text(
+            "● Phone GPS: Searching...",
+            16, GREEN, true
         );
-        status.setPadding(0, dp(12), 0, dp(5));
-        statusCard.addView(status);
+        phoneStatus.setPadding(0, dp(14), 0, dp(12));
+        statusCard.addView(phoneStatus);
 
-        statusCard.addView(text(
-            "Phone GPS  •  Motorcycle GPS: Not connected",
-            12, MUTED, false
-        ));
+        bikeStatus = text(
+            "● Motorcycle GPS: Not Connected",
+            14, MUTED, true
+        );
+        statusCard.addView(bikeStatus);
 
-        space(main, 20);
+        space(main, 22);
 
         main.addView(text(
             "LIVE GPS INFORMATION", 14, WHITE, true
@@ -131,37 +135,68 @@ public class MainActivity extends AppCompatActivity {
 
         main.addView(row2);
 
-        space(main, 18);
+        space(main, 20);
 
         LinearLayout mapCard = card(main);
 
         mapCard.addView(text(
-            "LIVE LOCATION", 14, WHITE, true
+            "LIVE TRACKING MAP", 14, WHITE, true
         ));
 
         TextView mapInfo = text(
-            "GPS coordinates will appear above. Map view will be added in the next step.",
-            13, MUTED, false
+            "Your live location will appear here.\n\nMap integration is the next development step.",
+            14, MUTED, false
         );
-        mapInfo.setPadding(0, dp(18), 0, dp(8));
+        mapInfo.setGravity(Gravity.CENTER);
+        mapInfo.setPadding(0, dp(35), 0, dp(35));
         mapCard.addView(mapInfo);
+
+        space(main, 18);
+
+        LinearLayout deviceCard = card(main);
+
+        deviceCard.addView(text(
+            "MOTORCYCLE DEVICE", 14, WHITE, true
+        ));
+
+        space(deviceCard, 12);
+
+        deviceCard.addView(text(
+            "Device: Not Connected",
+            14, MUTED, false
+        ));
+
+        deviceCard.addView(text(
+            "IMEI: Not Available",
+            13, MUTED, false
+        ));
+
+        deviceCard.addView(text(
+            "Battery: --",
+            13, MUTED, false
+        ));
+
+        deviceCard.addView(text(
+            "Network: --",
+            13, MUTED, false
+        ));
 
         space(main, 18);
 
         LinearLayout updateCard = card(main);
 
         updateCard.addView(text(
-            "LAST GPS UPDATE", 12, MUTED, true
+            "LAST PHONE GPS UPDATE", 12, MUTED, true
         ));
 
-        updated = text("--", 16, WHITE, true);
+        updated = text("--", 15, WHITE, true);
         updated.setPadding(0, dp(10), 0, 0);
         updateCard.addView(updated);
 
         space(main, 20);
 
         gpsButton = new Button(this);
-        gpsButton.setText("START GPS TRACKING");
+        gpsButton.setText("START PHONE GPS");
         gpsButton.setTextColor(WHITE);
         gpsButton.setTextSize(14);
         gpsButton.setAllCaps(false);
@@ -171,10 +206,36 @@ public class MainActivity extends AppCompatActivity {
             new LinearLayout.LayoutParams(-1, dp(54))
         );
 
-        space(main, 20);
+        space(main, 24);
+
+        main.addView(text(
+            "TRACKING FEATURES", 14, WHITE, true
+        ));
+
+        space(main, 12);
+
+        addFeature(main, "📍  Live Tracking",
+            "View real-time vehicle location");
+
+        addFeature(main, "🕘  History & Trips",
+            "View previous routes and trip details");
+
+        addFeature(main, "🛡  Geofence",
+            "Set safe zones and boundaries");
+
+        addFeature(main, "🔔  Alerts & Notifications",
+            "Movement, power and overspeed alerts");
+
+        addFeature(main, "🚘  Device Management",
+            "Add and manage GPS trackers");
+
+        addFeature(main, "📊  Reports",
+            "Review tracking and trip reports");
+
+        space(main, 24);
 
         TextView footer = text(
-            "TRACKMATE GPS  •  VERSION 1.0",
+            "TRACKMATE GPS  •  VERSION 1.1",
             11, MUTED, false
         );
         footer.setGravity(Gravity.CENTER);
@@ -183,17 +244,44 @@ public class MainActivity extends AppCompatActivity {
         setContentView(scroll);
     }
 
+    private void addFeature(
+        LinearLayout parent,
+        String title,
+        String description
+    ) {
+        LinearLayout box = card(parent);
+
+        TextView heading = text(title, 15, WHITE, true);
+        box.addView(heading);
+
+        TextView info = text(description, 12, MUTED, false);
+        info.setPadding(0, dp(6), 0, 0);
+        box.addView(info);
+
+        box.setOnClickListener(v ->
+            Toast.makeText(
+                this,
+                "This feature will be enabled in the next development step.",
+                Toast.LENGTH_SHORT
+            ).show()
+        );
+
+        space(parent, 9);
+    }
+
     private TextView addStat(
-        LinearLayout row, String title, String value
+        LinearLayout row,
+        String title,
+        String value
     ) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(14), dp(16), dp(8), dp(16));
+        box.setPadding(dp(13), dp(16), dp(8), dp(16));
         box.setBackground(background(CARD, 14));
 
         box.addView(text(title, 11, MUTED, true));
 
-        TextView result = text(value, 16, WHITE, true);
+        TextView result = text(value, 15, WHITE, true);
         result.setPadding(0, dp(10), 0, 0);
         box.addView(result);
 
@@ -221,7 +309,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private TextView text(
-        String value, int size, int color, boolean bold
+        String value,
+        int size,
+        int color,
+        boolean bold
     ) {
         TextView view = new TextView(this);
         view.setText(value);
@@ -235,7 +326,10 @@ public class MainActivity extends AppCompatActivity {
         return view;
     }
 
-    private GradientDrawable background(int color, int radius) {
+    private GradientDrawable background(
+        int color,
+        int radius
+    ) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
         drawable.setCornerRadius(dp(radius));
@@ -258,6 +352,10 @@ public class MainActivity extends AppCompatActivity {
         return ActivityCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        || ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED;
     }
 
@@ -283,30 +381,22 @@ public class MainActivity extends AppCompatActivity {
                 Location loc = result.getLastLocation();
                 if (loc == null) return;
 
-                latitude.setText(
-                    String.format(
-                        Locale.US, "%.6f", loc.getLatitude()
-                    )
-                );
+                latitude.setText(String.format(
+                    Locale.US, "%.6f", loc.getLatitude()
+                ));
 
-                longitude.setText(
-                    String.format(
-                        Locale.US, "%.6f", loc.getLongitude()
-                    )
-                );
+                longitude.setText(String.format(
+                    Locale.US, "%.6f", loc.getLongitude()
+                ));
 
-                accuracy.setText(
-                    String.format(
-                        Locale.US, "%.1f m", loc.getAccuracy()
-                    )
-                );
+                accuracy.setText(String.format(
+                    Locale.US, "%.1f m", loc.getAccuracy()
+                ));
 
-                speed.setText(
-                    String.format(
-                        Locale.US, "%.1f km/h",
-                        loc.hasSpeed() ? loc.getSpeed() * 3.6f : 0
-                    )
-                );
+                speed.setText(String.format(
+                    Locale.US, "%.1f km/h",
+                    loc.hasSpeed() ? loc.getSpeed() * 3.6f : 0
+                ));
 
                 updated.setText(
                     new SimpleDateFormat(
@@ -315,7 +405,8 @@ public class MainActivity extends AppCompatActivity {
                     ).format(new Date(loc.getTime()))
                 );
 
-                status.setText("● GPS LIVE");
+                phoneStatus.setText("● Phone GPS: LIVE");
+                phoneStatus.setTextColor(GREEN);
             }
         };
     }
@@ -342,11 +433,11 @@ public class MainActivity extends AppCompatActivity {
             );
 
             tracking = true;
-            status.setText("● Searching for GPS...");
-            gpsButton.setText("STOP GPS TRACKING");
+            phoneStatus.setText("● Phone GPS: Searching...");
+            gpsButton.setText("STOP PHONE GPS");
 
         } catch (SecurityException e) {
-            status.setText("GPS permission error");
+            phoneStatus.setText("Phone GPS: Permission Error");
         }
     }
 
@@ -356,8 +447,8 @@ public class MainActivity extends AppCompatActivity {
             locationClient.removeLocationUpdates(locationCallback);
             tracking = false;
 
-            status.setText("● GPS STOPPED");
-            gpsButton.setText("START GPS TRACKING");
+            phoneStatus.setText("● Phone GPS: STOPPED");
+            gpsButton.setText("START PHONE GPS");
         }
     }
 
@@ -375,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
             if (hasPermission()) {
                 startGPS();
             } else {
-                status.setText("Location permission denied");
+                phoneStatus.setText("Phone GPS: Permission Denied");
             }
         }
     }
@@ -386,4 +477,3 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 }
-
